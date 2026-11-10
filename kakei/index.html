@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="見張り番">
+<title>家計の見張り番</title>
+<style>
+:root {
+  --bg: #F4F5F8; --card: #FFFFFF; --ink: #1E2430; --muted: #6D7789; --line: #E1E4EC;
+  --navy: #1F3A63; --navy-ink: #EEF3FA; --navy-muted: #9DB4D2; --navy-rule: rgba(255,255,255,.14);
+  --accent: #2F6BB0; --accent-soft: #E5EEF8;
+  --safe: #2E7D5B; --safe-soft: #E4F0E9;
+  --warn: #B8791F; --warn-soft: #FAF0DE;
+  --danger: #B3452F; --danger-soft: #F9E7E2;
+  --track: #E7EAF1; --shadow: 0 1px 2px rgba(30,36,48,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12161D; --card: #1B212B; --ink: #E7EBF2; --muted: #909CB0; --line: #2A323F;
+    --navy: #16283F; --navy-ink: #E9F1FA; --navy-muted: #86A3C6; --navy-rule: rgba(255,255,255,.11);
+    --accent: #6BA3DE; --accent-soft: #1E2E42;
+    --safe: #55B98C; --safe-soft: #1E3730;
+    --warn: #D9A54A; --warn-soft: #3A2F1B;
+    --danger: #E07A5F; --danger-soft: #3B241E;
+    --track: #262E3A; --shadow: none;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F4F5F8; --card: #FFFFFF; --ink: #1E2430; --muted: #6D7789; --line: #E1E4EC;
+  --navy: #1F3A63; --navy-ink: #EEF3FA; --navy-muted: #9DB4D2; --navy-rule: rgba(255,255,255,.14);
+  --accent: #2F6BB0; --accent-soft: #E5EEF8;
+  --safe: #2E7D5B; --safe-soft: #E4F0E9; --warn: #B8791F; --warn-soft: #FAF0DE;
+  --danger: #B3452F; --danger-soft: #F9E7E2; --track: #E7EAF1; --shadow: 0 1px 2px rgba(30,36,48,.05);
+}
+:root[data-theme="dark"] {
+  --bg: #12161D; --card: #1B212B; --ink: #E7EBF2; --muted: #909CB0; --line: #2A323F;
+  --navy: #16283F; --navy-ink: #E9F1FA; --navy-muted: #86A3C6; --navy-rule: rgba(255,255,255,.11);
+  --accent: #6BA3DE; --accent-soft: #1E2E42;
+  --safe: #55B98C; --safe-soft: #1E3730; --warn: #D9A54A; --warn-soft: #3A2F1B;
+  --danger: #E07A5F; --danger-soft: #3B241E; --track: #262E3A; --shadow: none;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg); color: var(--ink); line-height: 1.6; padding-bottom: 72px;
+}
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum"; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+.wrap { max-width: 480px; margin: 0 auto; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 14px; }
+header { display: flex; align-items: baseline; justify-content: space-between; padding-top: 8px; gap: 12px; }
+h1 { font-size: 17px; font-weight: 700; letter-spacing: .04em; }
+.data-btns { display: flex; gap: 12px; flex-shrink: 0; }
+.data-btns button {
+  background: none; border: none; color: var(--muted); font-size: 12px;
+  font-family: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+
+.book { background: var(--navy); color: var(--navy-ink); border-radius: 14px; padding: 18px 20px 16px; }
+.book .label { font-size: 10.5px; letter-spacing: .14em; color: var(--navy-muted); }
+.book .bal { font-size: 34px; font-weight: 700; letter-spacing: -.015em; line-height: 1.15; margin-top: 3px; }
+.book .bal small { font-size: 16px; font-weight: 500; margin-left: 2px; letter-spacing: 0; }
+.book .asof { font-size: 11px; color: var(--navy-muted); margin-top: 3px; }
+.book .estnote { margin-top: 6px; opacity: .85; line-height: 1.5; }
+.book hr { border: none; border-top: 1px solid var(--navy-rule); margin: 14px 0 12px; }
+.countdown { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.countdown .d { font-size: 26px; font-weight: 700; letter-spacing: -.01em; }
+.countdown .t { font-size: 12px; color: var(--navy-muted); }
+.forecast { margin-top: 12px; font-size: 12px; color: var(--navy-muted); }
+.forecast .v { display: block; font-weight: 700; font-size: 24px; color: var(--navy-ink); letter-spacing: -.015em; margin-top: 1px; white-space: nowrap; }
+.verdict { margin-top: 11px; border-radius: 8px; padding: 9px 11px; font-size: 12.5px; line-height: 1.55; }
+.v-safe { background: rgba(85,185,140,.18); color: #CFF0E0; }
+.v-warn { background: rgba(217,165,74,.18); color: #F6E3BE; }
+.v-danger { background: rgba(224,122,95,.20); color: #FBD9CE; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; box-shadow: var(--shadow); }
+.card h2 { font-size: 10.5px; font-weight: 700; letter-spacing: .14em; color: var(--muted); margin-bottom: 12px; }
+
+.meter + .meter { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+.meter .top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px; gap: 8px; }
+.meter .name { font-size: 13.5px; font-weight: 600; }
+.meter .sub { font-size: 11px; color: var(--muted); font-weight: 400; margin-left: 6px; white-space: nowrap; }
+.meter .amt { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.meter .amt b { font-size: 16px; color: var(--ink); }
+.track { height: 8px; background: var(--track); border-radius: 99px; overflow: hidden; }
+.fill { height: 100%; border-radius: 99px; transition: width .25s ease; }
+.f-safe { background: var(--safe); } .f-warn { background: var(--warn); } .f-danger { background: var(--danger); }
+.meter .rest { font-size: 11.5px; color: var(--muted); margin-top: 5px; }
+.meter .rest b { color: var(--ink); }
+.meter.over .amt b, .meter.over .name, .meter.over .rest b { color: var(--danger); }
+
+.scroller { overflow-x: auto; }
+table.lines { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+table.lines th, table.lines td { padding: 7px 4px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+table.lines th { font-size: 10px; color: var(--muted); font-weight: 700; letter-spacing: .06em; }
+table.lines td:first-child, table.lines th:first-child { text-align: left; }
+table.lines tr:last-child td { border-bottom: none; }
+td.neg { color: var(--danger); }
+td.good { color: var(--safe); font-weight: 700; }
+td.bad { color: var(--danger); font-weight: 700; }
+
+.tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+.tabs button {
+  flex: 1; padding: 8px 4px; border: 1px solid var(--line); background: var(--card);
+  color: var(--muted); border-radius: 8px; font-size: 12.5px; font-family: inherit; font-weight: 600; cursor: pointer;
+}
+.tabs button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+.row { display: flex; gap: 8px; }
+.row > * { min-width: 0; }
+label.fld { display: block; font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+input[type=date], input[type=text], input[type=number] {
+  width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--ink); font-size: 16px; font-family: inherit;
+}
+.quick { display: flex; gap: 6px; margin-top: 9px; }
+.quick button {
+  flex: 1; padding: 7px 2px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+  border-radius: 7px; font-size: 12.5px; font-weight: 600; font-family: inherit; cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.quick button:active { background: var(--accent-soft); border-color: var(--accent); }
+.submit {
+  width: 100%; margin-top: 12px; padding: 12px; border: none; border-radius: 9px;
+  background: var(--accent); color: #fff; font-size: 14.5px; font-weight: 700; font-family: inherit; cursor: pointer;
+}
+.hint { font-size: 11.5px; color: var(--muted); margin-top: 9px; line-height: 1.6; }
+
+ul.log { list-style: none; }
+ul.log li { display: flex; align-items: center; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+ul.log li:last-child { border-bottom: none; }
+.tag { font-size: 10.5px; padding: 2px 7px; border-radius: 99px; font-weight: 700; white-space: nowrap; }
+.t-cash { background: var(--warn-soft); color: var(--warn); }
+.t-paypay { background: var(--accent-soft); color: var(--accent); }
+.t-bal { background: var(--safe-soft); color: var(--safe); }
+.log .dt { color: var(--muted); font-size: 11.5px; white-space: nowrap; }
+.log .memo { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 12px; }
+.log .val { font-weight: 600; white-space: nowrap; }
+.log .del { background: none; border: none; color: var(--muted); font-size: 17px; cursor: pointer; padding: 0 2px; line-height: 1; }
+.empty { color: var(--muted); font-size: 12.5px; padding: 6px 0; }
+footer { text-align: center; font-size: 11px; color: var(--muted); padding: 18px 0 8px; line-height: 1.7; }
+
+/* ── セットアップ ── */
+#setup { display: none; }
+#main { display: flex; flex-direction: column; gap: 14px; }
+body.needs-setup #setup { display: block; }
+body.needs-setup #main { display: none; }
+#setup .lead { font-size: 13px; line-height: 1.7; margin-bottom: 16px; color: var(--muted); }
+#setup .fldwrap + .fldwrap { margin-top: 12px; }
+#setup .note { font-size: 11.5px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+#toast {
+  position: fixed; left: 50%; bottom: 22px; transform: translate(-50%, 12px);
+  background: var(--navy); color: var(--navy-ink); padding: 10px 16px; border-radius: 99px;
+  font-size: 12.5px; max-width: calc(100vw - 32px); text-align: center;
+  opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease; z-index: 10;
+}
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>家計の見張り番</h1>
+    <div class="data-btns">
+      <button id="settingsBtn" type="button">設定</button>
+      <button id="exportBtn" type="button">書き出し</button>
+      <button id="importBtn" type="button">読み込み</button>
+    </div>
+  </header>
+
+  <!-- ── 初回セットアップ ── -->
+  <section class="card" id="setup">
+    <h2>さいしょに</h2>
+    <p class="lead">
+      入力した数字は<b>この端末の中だけ</b>に保存されます。どこにも送信されません。<br>
+      あとから「設定」でいつでも変えられます。
+    </p>
+    <div class="fldwrap">
+      <label class="fld" for="sBal">いまの口座残高（円）</label>
+      <input type="number" id="sBal" inputmode="numeric" placeholder="300000">
+    </div>
+    <div class="fldwrap">
+      <label class="fld" for="sDate">その残高の日付</label>
+      <input type="date" id="sDate">
+    </div>
+    <div class="fldwrap">
+      <label class="fld" for="sBudget">1ヶ月の生活費の枠（現金＋電子マネー）</label>
+      <input type="number" id="sBudget" inputmode="numeric" placeholder="150000">
+      <p class="note">ATMで下ろす分とチャージ分の合計。固定費や引落は含みません。</p>
+    </div>
+    <div class="fldwrap">
+      <label class="fld" for="sAtm">1ヶ月にATMへ行く回数の上限</label>
+      <input type="number" id="sAtm" inputmode="numeric" placeholder="2">
+    </div>
+    <div class="fldwrap">
+      <label class="fld" for="sBonusDate">次にまとまった入金がある日（任意）</label>
+      <input type="date" id="sBonusDate">
+      <p class="note">ボーナスなど。そこまで資金が持つかを計算します。</p>
+    </div>
+    <div class="fldwrap">
+      <label class="fld" for="sBonusAmt">その見込み額（円・任意）</label>
+      <input type="number" id="sBonusAmt" inputmode="numeric" placeholder="500000">
+    </div>
+    <div class="fldwrap">
+      <label class="fld" for="sOther">他に使える口座の合計（円・任意）</label>
+      <input type="number" id="sOther" inputmode="numeric" placeholder="0">
+    </div>
+    <div class="fldwrap">
+      <label class="fld" for="sBurn">1ヶ月に減る見込み額（円・任意）</label>
+      <input type="number" id="sBurn" inputmode="numeric" placeholder="150000">
+      <p class="note">分からなければ空欄で構いません。残高を2回入力すると実測に切り替わります。</p>
+    </div>
+    <button class="submit" id="setupBtn" type="button">はじめる</button>
+  </section>
+
+  <!-- ── メイン ── -->
+  <div id="main">
+
+    <section class="book">
+      <div class="label" id="balLabel">口座残高</div>
+      <div class="bal num" id="balNow">—<small>円</small></div>
+      <div class="asof" id="balAsOf"></div>
+      <div class="asof estnote" id="estNote" style="display:none">引落（家賃・カード・保険など）は含みません。給与と引落のあとに、通帳の実際の残高を入れ直してください。</div>
+      <hr>
+      <div class="countdown" id="cdWrap">
+        <span class="d num" id="cdDays">—</span>
+        <span class="t" id="cdLabel"></span>
+      </div>
+      <div class="forecast" id="fcWrap">
+        <span id="fcLabel"></span>
+        <span class="v num" id="fcVal">—</span>
+      </div>
+      <div class="verdict" id="verdict"></div>
+    </section>
+
+    <section class="card">
+      <h2>今月の枠</h2>
+      <div class="meter" id="mLife"></div>
+      <div class="meter" id="mAtm"></div>
+    </section>
+
+    <section class="card">
+      <h2>記録する</h2>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-mode="cash" type="button">現金を下ろした</button>
+        <button role="tab" aria-selected="false" data-mode="paypay" type="button">チャージした</button>
+        <button role="tab" aria-selected="false" data-mode="balance" type="button">残高を更新</button>
+      </div>
+      <div class="row">
+        <div style="flex:1.1"><label class="fld" for="fDate">日付</label><input type="date" id="fDate"></div>
+        <div style="flex:1"><label class="fld" for="fAmt">金額（円）</label><input type="number" id="fAmt" inputmode="numeric"></div>
+      </div>
+      <div class="quick" id="quick"></div>
+      <div style="margin-top:9px" id="memoWrap"><label class="fld" for="fMemo">メモ（任意）</label><input type="text" id="fMemo" placeholder="例：食費・日用品"></div>
+      <button class="submit" id="addBtn" type="button">記録する</button>
+      <p class="hint" id="modeHint"></p>
+    </section>
+
+    <section class="card">
+      <h2>月ごとの記録</h2>
+      <div class="scroller">
+        <table class="lines">
+          <thead><tr><th>月</th><th>生活費</th><th>ATM</th><th>月末残高</th><th>前月比</th></tr></thead>
+          <tbody id="linesBody"></tbody>
+        </table>
+      </div>
+      <p class="hint">月末残高は「残高を更新」で入れた値のうち、その月の最後のものです。</p>
+    </section>
+
+    <section class="card">
+      <h2>最近の記録</h2>
+      <ul class="log" id="logList"></ul>
+    </section>
+
+  </div>
+
+  <footer>
+    記録はこの端末の中だけに保存されます。<br>
+    ときどき「書き出し」でバックアップを取ってください。
+  </footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+const KEY = 'kakei-mihariban-v2';
+const $ = id => document.getElementById(id);
+
+/* ───────── 状態（個人の数字はすべてここ。コードには一切埋め込まない） ───────── */
+let state = null;
+try { state = JSON.parse(localStorage.getItem(KEY)); } catch (e) { state = null; }
+const valid = state && state.settings && Array.isArray(state.logs);
+if (!valid) document.body.classList.add('needs-setup');
+
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+/* ───────── ユーティリティ ───────── */
+const yen = n => (n < 0 ? '▲' : '') + Math.abs(Math.round(n)).toLocaleString('ja-JP');
+const todayISO = () => { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 10); };
+const parseISO = s => { const p = s.split('-').map(Number); return new Date(p[0], p[1] - 1, p[2]); };
+const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 86400000);
+const fmtDate = iso => { const p = iso.split('-'); return (+p[1]) + '/' + (+p[2]); };
+const esc = s => String(s).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c]));
+const sortKey = l => l.date + '#' + String(l.id).padStart(10, '0');
+const num = el => { const v = Number(el.value); return Number.isFinite(v) ? Math.round(v) : 0; };
+
+const balanceLogs = () => state.logs.filter(l => l.type === 'balance').sort((a, b) => sortKey(a).localeCompare(sortKey(b)));
+const latestBalance = () => balanceLogs().slice(-1)[0];
+
+/* 最後に入力した残高より後に記録した出金の合計 */
+function spentSinceAnchor() {
+  const a = latestBalance();
+  if (!a) return 0;
+  const ak = sortKey(a);
+  return state.logs
+    .filter(l => (l.type === 'cash' || l.type === 'paypay') && sortKey(l) > ak)
+    .reduce((s, l) => s + l.amount, 0);
+}
+
+/* 直近の残高と、25日以上さかのぼった一番新しい残高を比べる（＝直近1ヶ月の実力） */
+function burnRate() {
+  const bs = balanceLogs();
+  if (bs.length >= 2) {
+    const last = bs[bs.length - 1];
+    for (let i = bs.length - 2; i >= 0; i--) {
+      const d = daysBetween(bs[i].date, last.date);
+      if (d >= 25) return { rate: (bs[i].amount - last.amount) / d * 30.44, actual: true };
+    }
+    const d = daysBetween(bs[0].date, last.date);
+    if (d >= 10) return { rate: (bs[0].amount - last.amount) / d * 30.44, actual: true };
+  }
+  return { rate: state.settings.burn || 0, actual: false };
+}
+
+/* ───────── 描画 ───────── */
+function renderBook() {
+  const S = state.settings;
+  const bal = latestBalance();
+  if (!bal) return;
+  const spent = spentSinceAnchor();
+  const est = bal.amount - spent;
+
+  $('balLabel').textContent = spent > 0 ? '口座残高（推定）' : '口座残高';
+  $('balNow').innerHTML = yen(est) + '<small>円</small>';
+  $('balAsOf').textContent = spent > 0
+    ? bal.date.replace(/-/g, '/') + ' の ' + yen(bal.amount) + '円 から、記録した ' + yen(spent) + '円 を引いた額'
+    : bal.date.replace(/-/g, '/') + ' 時点';
+  $('estNote').style.display = spent > 0 ? '' : 'none';
+
+  const today = todayISO();
+  const hasGoal = !!S.bonusDate && S.bonusDate > today;
+  $('cdWrap').style.display = hasGoal ? '' : 'none';
+  $('fcWrap').style.display = hasGoal ? '' : 'none';
+
+  const b = burnRate();
+  const pace = b.rate > 0
+    ? '1ヶ月の減りは ' + yen(b.rate) + '円' + (b.actual ? '（記録からの実測）' : '（設定した見込み）') + '。'
+    : '';
+
+  if (!hasGoal) {
+    const v = $('verdict');
+    v.className = 'verdict v-warn';
+    v.textContent = pace + ' 次のまとまった入金日を設定すると、そこまで資金が持つかを計算します。';
+    return;
+  }
+
+  $('cdDays').textContent = Math.max(0, daysBetween(today, S.bonusDate));
+  const d = parseISO(S.bonusDate);
+  $('cdLabel').textContent = '日後  ' + (d.getMonth() + 1) + '/' + d.getDate()
+    + (S.bonusAmount ? '（入金の見込み ' + yen(S.bonusAmount) + '円）' : '');
+  $('fcLabel').textContent = 'この使い方が続いた場合、その日の残高は';
+
+  const span = Math.max(0, daysBetween(bal.date, S.bonusDate));
+  const fc = bal.amount - b.rate / 30.44 * span;
+  $('fcVal').textContent = yen(fc) + '円';
+
+  const other = S.other || 0;
+  const total = fc + other;
+  const v = $('verdict');
+  if (fc >= 200000) {
+    v.className = 'verdict v-safe';
+    v.textContent = pace + ' このペースなら余裕をもって迎えられます。';
+  } else if (total >= 0) {
+    v.className = 'verdict v-warn';
+    v.textContent = pace + (other ? ' 他の口座の' + yen(other) + '円を足してようやく ' + yen(total) + '円。' : ' ')
+      + 'ぎりぎりです。生活費の枠を守ってください。';
+  } else {
+    v.className = 'verdict v-danger';
+    v.textContent = pace + (other ? ' 他の口座を足しても ' + yen(total) + '円 足りません。' : ' 入金日より前に残高が尽きます。')
+      + ' まず生活費の枠を守ってください。';
+  }
+}
+
+function meter(el, name, sub, used, cap, restLabel, unit) {
+  const pct = Math.min(100, cap ? used / cap * 100 : 0);
+  const cls = pct >= 100 ? 'f-danger' : pct >= 80 ? 'f-warn' : 'f-safe';
+  const rest = cap - used;
+  const u = unit || '円';
+  el.className = 'meter' + (rest < 0 ? ' over' : '');
+  el.innerHTML =
+    '<div class="top"><span class="name">' + name + '<span class="sub">' + sub + '</span></span>' +
+    '<span class="amt num"><b>' + yen(used) + '</b> / ' + yen(cap) + '</span></div>' +
+    '<div class="track"><div class="fill ' + cls + '" style="width:' + pct + '%"></div></div>' +
+    '<div class="rest num">' + (rest >= 0 ? restLabel + ' <b>' + yen(rest) + u + '</b>' : '<b>' + yen(-rest) + u + ' オーバー</b>') + '</div>';
+}
+
+function renderMeters() {
+  const S = state.settings, ym = todayISO().slice(0, 7);
+  const inMonth = l => l.date.slice(0, 7) === ym;
+  const life = state.logs.filter(l => (l.type === 'cash' || l.type === 'paypay') && inMonth(l)).reduce((s, l) => s + l.amount, 0);
+  const atm = state.logs.filter(l => l.type === 'cash' && inMonth(l)).length;
+  meter($('mLife'), '今月の生活費', '現金＋チャージ', life, S.budget, '残り');
+  meter($('mAtm'), 'ATMに行った回数', '回数を減らすほど効く', atm, S.atmCap, '残り', '回');
+}
+
+function renderLines() {
+  const months = {};
+  state.logs.forEach(l => {
+    const m = l.date.slice(0, 7);
+    if (!months[m]) months[m] = { life: 0, atm: 0, bal: null };
+    if (l.type === 'cash' || l.type === 'paypay') months[m].life += l.amount;
+    if (l.type === 'cash') months[m].atm++;
+  });
+  balanceLogs().forEach(b => { const m = b.date.slice(0, 7); if (months[m]) months[m].bal = b.amount; });
+  const keys = Object.keys(months).sort().slice(-8);
+  if (!keys.length) { $('linesBody').innerHTML = '<tr><td colspan="5" class="empty">まだ記録がありません。</td></tr>'; return; }
+  const S = state.settings;
+  let prev = null;
+  $('linesBody').innerHTML = keys.map(m => {
+    const r = months[m];
+    const lifeCls = r.life > S.budget ? 'bad' : (r.life ? 'good' : '');
+    const atmCls = r.atm > S.atmCap ? 'bad' : (r.atm ? 'good' : '');
+    let diff = '<td class="num" style="color:var(--muted)">—</td>';
+    if (r.bal !== null && prev !== null) {
+      const d = r.bal - prev;
+      diff = '<td class="num' + (d < 0 ? ' neg' : '') + '">' + (d >= 0 ? '+' : '') + yen(d) + '</td>';
+    }
+    if (r.bal !== null) prev = r.bal;
+    return '<tr><td>' + (+m.slice(5)) + '月</td>' +
+      '<td class="num ' + lifeCls + '">' + yen(r.life) + '</td>' +
+      '<td class="num ' + atmCls + '">' + r.atm + '</td>' +
+      '<td class="num">' + (r.bal === null ? '—' : yen(r.bal)) + '</td>' + diff + '</tr>';
+  }).join('');
+}
+
+function renderLog() {
+  const logs = [...state.logs].sort((a, b) => sortKey(b).localeCompare(sortKey(a))).slice(0, 25);
+  if (!logs.length) { $('logList').innerHTML = '<li class="empty">まだ記録がありません。</li>'; return; }
+  const T = { cash: ['現金', 't-cash'], paypay: ['チャージ', 't-paypay'], balance: ['残高', 't-bal'] };
+  $('logList').innerHTML = logs.map(l => {
+    const t = T[l.type] || ['その他', 't-cash'];
+    return '<li><span class="dt num">' + fmtDate(l.date) + '</span><span class="tag ' + t[1] + '">' + t[0] + '</span>' +
+      '<span class="memo">' + (l.memo ? esc(l.memo) : '') + '</span>' +
+      '<span class="val num">' + yen(l.amount) + '</span>' +
+      '<button class="del" type="button" data-del="' + l.id + '" aria-label="削除">×</button></li>';
+  }).join('');
+}
+
+function render() {
+  if (!state || !state.settings) return;
+  renderBook(); renderMeters(); renderLines(); renderLog();
+}
+
+/* ───────── トースト ───────── */
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ───────── セットアップ ───────── */
+function openSetup() {
+  const S = (state && state.settings) || {};
+  const b = state && latestBalance();
+  $('sBal').value = b ? b.amount : '';
+  $('sDate').value = b ? b.date : todayISO();
+  $('sBudget').value = S.budget || '';
+  $('sAtm').value = S.atmCap || '';
+  $('sBonusDate').value = S.bonusDate || '';
+  $('sBonusAmt').value = S.bonusAmount || '';
+  $('sOther').value = S.other || '';
+  $('sBurn').value = S.burn || '';
+  document.body.classList.add('needs-setup');
+  window.scrollTo(0, 0);
+}
+
+$('setupBtn').onclick = () => {
+  const bal = num($('sBal'));
+  if (bal <= 0) { $('sBal').focus(); toast('いまの口座残高を入れてください。'); return; }
+  const date = $('sDate').value || todayISO();
+  const settings = {
+    budget: num($('sBudget')) || 150000,
+    atmCap: num($('sAtm')) || 4,
+    bonusDate: $('sBonusDate').value || '',
+    bonusAmount: num($('sBonusAmt')),
+    other: num($('sOther')),
+    burn: num($('sBurn'))
+  };
+  if (!state || !Array.isArray(state.logs)) state = { logs: [], seq: 1 };
+  state.settings = settings;
+  // 既存の残高記録と同じ日付・同じ額なら二重登録しない
+  const cur = latestBalance();
+  if (!cur || cur.date !== date || cur.amount !== bal) {
+    state.logs.push({ id: state.seq++, date: date, type: 'balance', amount: bal, memo: '' });
+  }
+  save();
+  document.body.classList.remove('needs-setup');
+  render();
+  toast('設定を保存しました。');
+};
+
+$('settingsBtn').onclick = openSetup;
+
+/* ───────── 記録 ───────── */
+let mode = 'cash';
+const HINTS = {
+  cash: 'ATMで下ろしたら、その場で記録。ATMに行く回数そのものを減らすのがいちばん効きます。手数料のかからないATMだけを使ってください。',
+  paypay: 'チャージは月のはじめにまとめて。オートチャージは切っておくと、上限が見えます。',
+  balance: '給与と引落のあとに、通帳の実際の残高を入れてください。2回以上入れると、実際の減りかたから先の残高を計算します。'
+};
+function quickFor(m) {
+  const S = state && state.settings;
+  if (m === 'balance') return [];
+  const base = m === 'cash' ? Math.round((S ? S.budget : 150000) / 2 / 10000) * 10000 : 10000;
+  const a = Math.max(10000, base);
+  return [Math.round(a / 2 / 1000) * 1000, a, a + Math.round(a / 2 / 1000) * 1000];
+}
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.mode === m)));
+  $('modeHint').textContent = HINTS[m];
+  $('memoWrap').style.display = m === 'balance' ? 'none' : '';
+  const q = quickFor(m);
+  $('quick').innerHTML = q.map(v => '<button type="button" data-q="' + v + '">' + yen(v) + '</button>').join('');
+  $('fAmt').placeholder = m === 'balance' ? '300000' : String(q[1] || '');
+}
+document.querySelectorAll('.tabs button').forEach(b => { b.onclick = () => setMode(b.dataset.mode); });
+$('quick').onclick = e => { const q = e.target.dataset && e.target.dataset.q; if (q) $('fAmt').value = q; };
+
+$('addBtn').onclick = () => {
+  const amount = num($('fAmt'));
+  if (amount <= 0) { $('fAmt').focus(); return; }
+  state.logs.push({
+    id: state.seq++, date: $('fDate').value || todayISO(), type: mode, amount: amount,
+    memo: mode === 'balance' ? '' : $('fMemo').value.trim()
+  });
+  save(); render();
+  $('fAmt').value = ''; $('fMemo').value = '';
+};
+
+$('logList').onclick = e => {
+  const id = e.target.dataset && e.target.dataset.del;
+  if (!id) return;
+  state.logs = state.logs.filter(l => l.id !== Number(id));
+  save(); render();
+};
+
+/* ───────── 書き出し／読み込み ───────── */
+$('exportBtn').onclick = () => {
+  if (!state) return;
+  const json = JSON.stringify({ app: 'kakei-mihariban', version: 2, exported: new Date().toISOString(), settings: state.settings, logs: state.logs }, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'kakei-' + todayISO() + '.json';
+  a.click(); URL.revokeObjectURL(a.href);
+  toast('書き出しました。');
+};
+
+$('importBtn').onclick = () => {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'application/json,.json';
+  inp.onchange = () => {
+    const f = inp.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try {
+        const d = JSON.parse(rd.result);
+        if (!Array.isArray(d.logs)) throw new Error('形式が違います');
+        state = {
+          logs: d.logs,
+          seq: Math.max(0, ...d.logs.map(l => l.id || 0)) + 1,
+          settings: d.settings || (state && state.settings) || { budget: 150000, atmCap: 4, other: 0, burn: 0, bonusDate: '', bonusAmount: 0 }
+        };
+        save();
+        document.body.classList.remove('needs-setup');
+        render();
+        toast(d.logs.length + '件の記録を読み込みました。');
+      } catch (err) { toast('読み込めませんでした：' + err.message); }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+};
+
+/* ───────── 起動 ───────── */
+$('fDate').value = todayISO();
+if (valid) {
+  setMode('cash');
+  render();
+} else {
+  $('sDate').value = todayISO();
+  setMode('cash');
+}
+</script>
+</body>
+</html>

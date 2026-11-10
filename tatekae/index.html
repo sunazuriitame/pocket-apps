@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>立て替えメモ</title>
+<!-- iPhoneのホーム画面アプリとして動かすための設定 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="立て替えメモ">
+<meta name="theme-color" content="#F3F6F1">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<style>
+:root {
+  --bg: #F3F6F1;
+  --card: #FFFFFF;
+  --ink: #222B27;
+  --muted: #6B7A72;
+  --line: #E0E7DF;
+  --green: #2E7D5B;
+  --green-soft: #E4F0E9;
+  --persimmon: #C05C33;
+  --persimmon-soft: #F7E9E1;
+  --book: #24523F;
+  --book-ink: #F2F7F0;
+  --book-muted: #A9C4B5;
+  --danger: #B3452F;
+  --focus: #2E7D5B;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141A17;
+    --card: #1D2521;
+    --ink: #E8EDE9;
+    --muted: #92A198;
+    --line: #2B352F;
+    --green: #55B98C;
+    --green-soft: #21382D;
+    --persimmon: #E0885B;
+    --persimmon-soft: #3A2A20;
+    --book: #1F4635;
+    --book-ink: #EDF5EF;
+    --book-muted: #8FB4A0;
+    --danger: #E07A5F;
+    --focus: #55B98C;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F3F6F1; --card: #FFFFFF; --ink: #222B27; --muted: #6B7A72;
+  --line: #E0E7DF; --green: #2E7D5B; --green-soft: #E4F0E9;
+  --persimmon: #C05C33; --persimmon-soft: #F7E9E1;
+  --book: #24523F; --book-ink: #F2F7F0; --book-muted: #A9C4B5;
+  --danger: #B3452F; --focus: #2E7D5B;
+}
+:root[data-theme="dark"] {
+  --bg: #141A17; --card: #1D2521; --ink: #E8EDE9; --muted: #92A198;
+  --line: #2B352F; --green: #55B98C; --green-soft: #21382D;
+  --persimmon: #E0885B; --persimmon-soft: #3A2A20;
+  --book: #1F4635; --book-ink: #EDF5EF; --book-muted: #8FB4A0;
+  --danger: #E07A5F; --focus: #55B98C;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.6;
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
+}
+.wrap {
+  max-width: 480px; margin: 0 auto;
+  padding: calc(16px + env(safe-area-inset-top)) calc(16px + env(safe-area-inset-right)) 0 calc(16px + env(safe-area-inset-left));
+  display: flex; flex-direction: column; gap: 16px;
+}
+
+header { display: flex; align-items: baseline; justify-content: space-between; padding-top: 8px; }
+h1 { font-size: 18px; font-weight: 700; letter-spacing: 0.04em; }
+.data-btns { display: flex; gap: 12px; }
+.data-btns button {
+  background: none; border: none; color: var(--muted); font-size: 12px;
+  font-family: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px;
+}
+
+/* ── 残高カード(通帳の表紙のイメージ) ── */
+.book {
+  background: var(--book);
+  color: var(--book-ink);
+  border-radius: 14px;
+  padding: 20px 20px 18px;
+  box-shadow: 0 2px 10px rgba(20, 40, 30, 0.18);
+}
+.book .label { font-size: 12px; letter-spacing: 0.12em; color: var(--book-muted); }
+.book .amount {
+  font-family: ui-rounded, "SF Pro Rounded", "Hiragino Sans", sans-serif;
+  font-size: 42px; font-weight: 700; line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+  text-wrap: balance;
+}
+.book .amount .yen { font-size: 24px; margin-right: 2px; }
+.book .sub { font-size: 12px; color: var(--book-muted); margin-top: 2px; }
+.book .settle {
+  margin-top: 14px; width: 100%;
+  background: var(--book-ink); color: var(--book);
+  border: none; border-radius: 10px; padding: 12px;
+  font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.book .settle:active { opacity: 0.85; }
+.book.clear { background: var(--card); color: var(--ink); border: 1px solid var(--line); box-shadow: none; }
+.book.clear .label, .book.clear .sub { color: var(--muted); }
+
+/* ── 入力フォーム ── */
+.entry { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: var(--bg); border-radius: 10px; padding: 4px; }
+.seg button {
+  border: none; background: none; padding: 10px 4px; border-radius: 8px;
+  font-family: inherit; font-size: 14px; font-weight: 700; color: var(--muted); cursor: pointer;
+}
+.seg button.on-out { background: var(--persimmon-soft); color: var(--persimmon); }
+.seg button.on-in { background: var(--green-soft); color: var(--green); }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field label { font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+.field input {
+  border: 1px solid var(--line); border-radius: 10px; padding: 12px;
+  font-family: inherit; font-size: 16px; background: var(--bg); color: var(--ink);
+  font-variant-numeric: tabular-nums; width: 100%;
+}
+.field input:focus { outline: 2px solid var(--focus); outline-offset: 1px; border-color: transparent; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.add {
+  border: none; border-radius: 10px; padding: 13px;
+  font-family: inherit; font-size: 16px; font-weight: 700; color: #fff; cursor: pointer;
+  background: var(--persimmon);
+}
+.add.in { background: var(--green); }
+.add:active { opacity: 0.85; }
+
+/* ── 履歴 ── */
+.month h2 {
+  font-size: 13px; font-weight: 700; color: var(--muted); letter-spacing: 0.06em;
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 4px 4px 6px;
+}
+.month h2 .mtotal { font-weight: 400; font-size: 12px; font-variant-numeric: tabular-nums; }
+.month ul { list-style: none; background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.month li { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.month li:last-child { border-bottom: none; }
+.mark { flex-shrink: 0; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-size: 15px; font-weight: 700; }
+.mark.out { background: var(--persimmon-soft); color: var(--persimmon); }
+.mark.in  { background: var(--green-soft); color: var(--green); }
+.what { flex: 1; min-width: 0; }
+.what .name { display: block; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.what .when { display: block; font-size: 11px; color: var(--muted); }
+.amt { font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 700; white-space: nowrap; }
+.amt.in { color: var(--green); }
+.badge {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+  border-radius: 999px; padding: 2px 8px; flex-shrink: 0;
+}
+.badge.done { background: var(--green-soft); color: var(--green); }
+.badge.wait { background: var(--persimmon-soft); color: var(--persimmon); }
+.del {
+  background: none; border: none; color: var(--muted); font-size: 17px;
+  cursor: pointer; padding: 4px 2px; flex-shrink: 0; font-family: inherit;
+}
+.del:hover { color: var(--danger); }
+.empty { text-align: center; color: var(--muted); font-size: 14px; padding: 28px 0; }
+footer { text-align: center; font-size: 11px; color: var(--muted); padding-top: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>立て替えメモ</h1>
+    <div class="data-btns">
+      <button id="exportBtn" type="button">書き出し</button>
+      <button id="importBtn" type="button">読み込み</button>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <section class="book" id="bookCard" aria-live="polite"></section>
+
+  <form class="entry" id="entryForm">
+    <div class="seg" role="group" aria-label="記録の種類">
+      <button type="button" id="segOut" class="on-out">立て替えた</button>
+      <button type="button" id="segIn">返してもらった</button>
+    </div>
+    <div class="field">
+      <label for="amount">金額(円)</label>
+      <input id="amount" inputmode="numeric" pattern="[0-9]*" placeholder="1980" autocomplete="off">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label for="item">内容</label>
+        <input id="item" placeholder="スーパーの買い物" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="date">日付</label>
+        <input id="date" type="date">
+      </div>
+    </div>
+    <button class="add" id="addBtn" type="submit">立て替えを記録</button>
+  </form>
+
+  <div id="history"></div>
+  <footer>データはこの端末の中だけに保存されます。機種変更のときは「書き出し」でバックアップを。</footer>
+</div>
+
+<script>
+const KEY = 'tatekae-memo-v1';
+let entries = [];
+try { entries = JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { entries = []; }
+let mode = 'out'; // out=立て替え, in=返済
+
+const $ = id => document.getElementById(id);
+const yen = n => '¥' + Math.abs(n).toLocaleString('ja-JP');
+const esc = s => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const WEEK = ['日','月','火','水','木','金','土'];
+function fmtDate(iso) {
+  const d = new Date(iso + 'T00:00:00');
+  return (d.getMonth()+1) + '月' + d.getDate() + '日(' + WEEK[d.getDay()] + ')';
+}
+function todayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(entries)); }
+
+function balance() {
+  return entries.reduce((s, e) => s + (e.type === 'out' ? e.amount : -e.amount), 0);
+}
+
+// 返済をあてはめて、精算ずみの立て替えを判定(古い順)
+function settledIds() {
+  let pool = entries.filter(e => e.type === 'in').reduce((s, e) => s + e.amount, 0);
+  const ids = new Set();
+  const outs = entries.filter(e => e.type === 'out').sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+  for (const e of outs) {
+    if (pool >= e.amount) { pool -= e.amount; ids.add(e.id); } else break;
+  }
+  return ids;
+}
+
+function renderBook() {
+  const bal = balance();
+  const card = $('bookCard');
+  const lastIn = entries.filter(e => e.type === 'in').sort((a, b) => b.date.localeCompare(a.date))[0];
+  const openCount = entries.filter(e => e.type === 'out').length - settledIds().size;
+  if (bal > 0) {
+    card.className = 'book';
+    card.innerHTML =
+      '<div class="label">ママにもらう分</div>' +
+      '<div class="amount"><span class="yen">¥</span>' + bal.toLocaleString('ja-JP') + '</div>' +
+      '<div class="sub">未精算の立て替え ' + openCount + '件' +
+      (lastIn ? ' ・ 最後に返してもらったのは ' + fmtDate(lastIn.date) : '') + '</div>' +
+      '<button class="settle" type="button" id="settleBtn">全額返してもらった(¥' + bal.toLocaleString('ja-JP') + ')</button>';
+    $('settleBtn').onclick = () => {
+      if (!confirm('¥' + bal.toLocaleString('ja-JP') + ' を全額精算として記録しますか?')) return;
+      entries.push({ id: Date.now(), type: 'in', amount: bal, item: '全額精算', date: todayISO() });
+      save(); render();
+    };
+  } else if (bal < 0) {
+    card.className = 'book';
+    card.innerHTML =
+      '<div class="label">ママに返す分(もらいすぎ)</div>' +
+      '<div class="amount"><span class="yen">¥</span>' + Math.abs(bal).toLocaleString('ja-JP') + '</div>' +
+      '<div class="sub">返してもらった額が立て替えより多くなっています</div>';
+  } else {
+    card.className = 'book clear';
+    card.innerHTML =
+      '<div class="label">ママにもらう分</div>' +
+      '<div class="amount"><span class="yen">¥</span>0</div>' +
+      '<div class="sub">ぜんぶ精算ずみです</div>';
+  }
+}
+
+function renderHistory() {
+  const box = $('history');
+  if (entries.length === 0) {
+    box.innerHTML = '<div class="empty">まだ記録がありません。<br>買い物を立て替えたら上のフォームからどうぞ。</div>';
+    return;
+  }
+  const done = settledIds();
+  const sorted = [...entries].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  const months = {};
+  for (const e of sorted) {
+    const m = e.date.slice(0, 7);
+    (months[m] = months[m] || []).push(e);
+  }
+  box.innerHTML = Object.keys(months).sort().reverse().map(m => {
+    const list = months[m];
+    const outSum = list.filter(e => e.type === 'out').reduce((s, e) => s + e.amount, 0);
+    const [y, mo] = m.split('-');
+    return '<section class="month"><h2><span>' + y + '年' + Number(mo) + '月</span>' +
+      '<span class="mtotal">立て替え ' + yen(outSum) + '</span></h2><ul>' +
+      list.map(e => {
+        const isOut = e.type === 'out';
+        return '<li>' +
+          '<span class="mark ' + (isOut ? 'out' : 'in') + '">' + (isOut ? '出' : '返') + '</span>' +
+          '<span class="what"><span class="name">' + esc(e.item || (isOut ? '買い物' : '返済')) + '</span>' +
+          '<span class="when">' + fmtDate(e.date) + '</span></span>' +
+          (isOut ? '<span class="badge ' + (done.has(e.id) ? 'done">済' : 'wait">未') + '</span>' : '') +
+          '<span class="amt ' + (isOut ? '' : 'in') + '">' + (isOut ? '' : '−') + yen(e.amount) + '</span>' +
+          '<button class="del" type="button" data-id="' + e.id + '" aria-label="削除">×</button>' +
+          '</li>';
+      }).join('') + '</ul></section>';
+  }).join('');
+  box.querySelectorAll('.del').forEach(btn => {
+    btn.onclick = () => {
+      const e = entries.find(x => x.id === Number(btn.dataset.id));
+      if (!e) return;
+      if (!confirm('「' + (e.item || '記録') + ' ' + yen(e.amount) + '」を削除しますか?')) return;
+      entries = entries.filter(x => x.id !== e.id);
+      save(); render();
+    };
+  });
+}
+
+function render() { renderBook(); renderHistory(); }
+
+function setMode(m) {
+  mode = m;
+  $('segOut').className = m === 'out' ? 'on-out' : '';
+  $('segIn').className = m === 'in' ? 'on-in' : '';
+  $('addBtn').textContent = m === 'out' ? '立て替えを記録' : '返済を記録';
+  $('addBtn').classList.toggle('in', m === 'in');
+  $('item').placeholder = m === 'out' ? 'スーパーの買い物' : '現金でもらった';
+}
+$('segOut').onclick = () => setMode('out');
+$('segIn').onclick = () => setMode('in');
+
+$('entryForm').onsubmit = ev => {
+  ev.preventDefault();
+  const amount = parseInt($('amount').value.replace(/[^0-9]/g, ''), 10);
+  if (!amount || amount <= 0) { $('amount').focus(); return; }
+  entries.push({
+    id: Date.now(),
+    type: mode,
+    amount: amount,
+    item: $('item').value.trim(),
+    date: $('date').value || todayISO()
+  });
+  save();
+  $('amount').value = ''; $('item').value = '';
+  render();
+};
+
+$('exportBtn').onclick = async () => {
+  const json = JSON.stringify({ app: 'tatekae-memo', exported: new Date().toISOString(), entries: entries }, null, 2);
+  const filename = 'tatekae-memo-' + todayISO() + '.json';
+  // iPhoneなど、ページから直接ダウンロードできない環境ではこちらを使う
+  if (window.claude && window.claude.downloads) {
+    try {
+      await window.claude.downloads.save({ filename: filename, data: json });
+    } catch (err) {
+      if (err && err.code === 'declined') return;
+      alert('保存できませんでした(' + ((err && err.code) || 'エラー') + ')。もう一度お試しください。');
+    }
+    return;
+  }
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+$('importBtn').onclick = () => $('importFile').click();
+$('importFile').onchange = ev => {
+  const file = ev.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const data = JSON.parse(reader.result);
+      const list = Array.isArray(data) ? data : data.entries;
+      if (!Array.isArray(list)) throw new Error('形式が違います');
+      if (!confirm('いまの記録を読み込んだデータ(' + list.length + '件)に置き換えますか?')) return;
+      entries = list;
+      save(); render();
+    } catch (e) {
+      alert('読み込めませんでした。「書き出し」で保存したJSONファイルを選んでください。');
+    }
+    ev.target.value = '';
+  };
+  reader.readAsText(file);
+};
+
+$('date').value = todayISO();
+render();
+</script>
+</body>
+</html>

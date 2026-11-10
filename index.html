@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pocket Apps</title>
+<style>
+:root {
+  --bg: #F4F5F8; --card: #FFFFFF; --ink: #1E2430; --muted: #6D7789; --line: #E1E4EC;
+  --navy: #1F3A63; --accent: #2F6BB0; --shadow: 0 1px 2px rgba(30,36,48,.05);
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #12161D; --card: #1B212B; --ink: #E7EBF2; --muted: #909CB0; --line: #2A323F;
+          --navy: #86A3C6; --accent: #6BA3DE; --shadow: none; }
+}
+:root[data-theme="light"] { --bg:#F4F5F8; --card:#FFFFFF; --ink:#1E2430; --muted:#6D7789; --line:#E1E4EC; --navy:#1F3A63; --accent:#2F6BB0; --shadow:0 1px 2px rgba(30,36,48,.05); }
+:root[data-theme="dark"]  { --bg:#12161D; --card:#1B212B; --ink:#E7EBF2; --muted:#909CB0; --line:#2A323F; --navy:#86A3C6; --accent:#6BA3DE; --shadow:none; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: "Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",-apple-system,BlinkMacSystemFont,sans-serif;
+  background: var(--bg); color: var(--ink); line-height: 1.6;
+}
+.wrap { max-width: 480px; margin: 0 auto; padding: 32px 16px; display: flex; flex-direction: column; gap: 14px; }
+h1 { font-size: 18px; font-weight: 700; letter-spacing: .06em; color: var(--navy); }
+.lead { font-size: 13px; color: var(--muted); margin-bottom: 8px; line-height: 1.7; }
+a.app {
+  display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px;
+  padding: 16px; text-decoration: none; color: inherit; box-shadow: var(--shadow);
+}
+a.app:hover { border-color: var(--accent); }
+a.app .name { font-size: 15px; font-weight: 700; }
+a.app .desc { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+footer { font-size: 11.5px; color: var(--muted); margin-top: 10px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Pocket Apps</h1>
+  <p class="lead">
+    スマホのホーム画面に置いて使う、小さな道具。<br>
+    入力したものは<b>その端末の中だけ</b>に保存され、どこにも送信されません。
+  </p>
+
+  <a class="app" href="kakei/">
+    <div class="name">家計の見張り番</div>
+    <div class="desc">現金とチャージの使いすぎを止める。次の入金日まで資金が持つかを計算します。</div>
+  </a>
+
+  <a class="app" href="tatekae/">
+    <div class="name">立て替えメモ</div>
+    <div class="desc">立て替えた金額と返済を記録して、いまいくら貸しているかを出します。</div>
+  </a>
+
+  <footer>
+    使い方：Safariで開く → 共有ボタン → ホーム画面に追加。<br>
+    <b>必ずホーム画面のアイコンから開いてください。</b>Safariのタブとは保存場所が別になります。
+  </footer>
+</div>
+</body>
+</html>
